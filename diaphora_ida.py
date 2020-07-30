@@ -1697,7 +1697,8 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
                     if len(drefs) > 0:
                         for dref in drefs:
                             if get_func(dref) is None:
-                                str_constant = get_strlit_contents(dref, -1, -1)
+                                # str_constant = get_strlit_contents(dref, -1, -1)
+                                str_constant = idc.get_strlit_contents(dref)
                                 if str_constant is not None:
                                     str_constant = str_constant.decode("utf-8", "backslashreplace")
                                     if str_constant not in constants:
