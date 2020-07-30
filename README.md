@@ -83,10 +83,8 @@ These are some screenshots of Diaphora diffing the [Microsoft bulletin MS15-050]
 
 
 Here is a screenshot of Diaphora diffing [iBoot from iOS 10.3.3 against iOS 11.0](https://blog.matteyeux.com/hacking/2018/04/04/diaphora-diff-and-ida.html):
-
-2020/07/16:
-
-    1. Port downto IDA 7.0 - 7.3 and Python 2.7 by Ngon Nguyen (Cat Bui)
-    2. Fix "database was locked" bug and add clipboard commands by HTC (VinCSS)
-
 ![Diaphora diffing iBoot from iOS 10.3.3 against iOS 11.0](https://blog.matteyeux.com/images/newgraph.PNG)
+
+## 2020/07/16:
+1. Port downto IDA 7.0 - 7.3 and Python 2.7 by Ngon Nguyen (Cat Bui)
+2. Fix "database was locked" bug and add clipboard commands by HTC (VinCSS)
