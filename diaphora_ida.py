@@ -490,8 +490,8 @@ class CBinDiffExporterSetup(Form):
 
   NOTE: Don't select IDA database files (.IDB, .I64) as only SQLite databases are considered.
 """
-        args = {'iFileSave': Form.FileInput(save=True, swidth=40),
-                'iFileOpen': Form.FileInput(open=True, swidth=40),
+        args = {'iFileSave': Form.FileInput(save=True, swidth=40, hlp="SQLite database (*.sqlite)"),
+                'iFileOpen': Form.FileInput(open=True, swidth=40, hlp="SQLite database (*.sqlite)"),
                 'iMinEA': Form.NumericInput(tp=Form.FT_HEX, swidth=22),
                 'iMaxEA': Form.NumericInput(tp=Form.FT_HEX, swidth=22),
                 'cGroup1': Form.ChkGroupControl(("rUseDecompiler",
@@ -512,8 +512,12 @@ class CBinDiffExporterSetup(Form):
     def set_options(self, opts):
         if opts.file_out is not None:
             self.iFileSave.value = opts.file_out
+            if not self.iFileSave.value:
+                self.iFileSave.value = "*.sqlite"
         if opts.file_in is not None:
             self.iFileOpen.value = opts.file_in
+            if not self.iFileOpen.value:
+                self.iFileOpen.value = "*.sqlite"
         if opts.project_script is not None:
             self.iProjectSpecificRules.value = opts.project_script
 
