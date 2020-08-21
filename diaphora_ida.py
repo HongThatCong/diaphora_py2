@@ -2362,7 +2362,7 @@ def _diff_or_export(use_ui, **options):
                 profiler = cProfile.Profile()
                 profiler.runcall(bd.diff, opts.file_in)
                 profiler.print_stats(sort="time")
-            else:
+            elif opts.file_in != "*.sqlite":
                 bd.diff(opts.file_in)
     except:
         print(("Error: %s" % sys.exc_info()[1]))
