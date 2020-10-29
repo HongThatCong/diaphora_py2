@@ -220,12 +220,13 @@ class CDiaphoraChooser(diaphora.CChooser, Choose):
         return len(self.actions) - 1
 
     def OnPopup(self, form, popup_handle):
-        for num, action_name, menu_name, shortcut in self.actions:
+        for num, _action_name, menu_name, shortcut in self.actions:
             if menu_name is None:
                 ida_kernwin.attach_action_to_popup(form, popup_handle, None)
             else:
                 handler = command_handler_t(self, num, 2)
-                desc = ida_kernwin.action_desc_t(action_name, menu_name, handler, shortcut)
+                # action_name parameter should be None for calling attach_dynamic_action_to_popup
+                desc = ida_kernwin.action_desc_t(None, menu_name, handler, shortcut)
                 ida_kernwin.attach_dynamic_action_to_popup(form, popup_handle, desc)
 
 
