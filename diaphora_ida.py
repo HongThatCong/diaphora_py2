@@ -212,6 +212,10 @@ class CDiaphoraChooser(diaphora.CChooser, Choose):
         self.actions = []
 
     def AddCommand(self, menu_name, shortcut=None):
+        for action in self.actions:
+            if menu_name == action[2] and menu_name is not None:
+                return  # menu already existed
+
         if menu_name is not None:
             action_name = "Diaphora:%s" % menu_name.replace(" ", "")
         else:
@@ -287,6 +291,7 @@ class CIDAChooser(CDiaphoraChooser):
         if t < 0:
             return False
 
+        self.actions = []
         if self.show_commands and (self.cmd_diff_asm is None or force):
             # create aditional actions handlers
             self.cmd_rediff = self.AddCommand("Diff again")
@@ -1512,7 +1517,7 @@ class CIDABinDiff(diaphora.CBinDiff):
                 if ret:
                     t = ret
             except:
-                log("Cannot decompile 0x%x: %s" % (ea, str(sys.exc_info()[1])))
+                log("Cannot decompile 0x%x: %s\n" % (ea, str(sys.exc_info()[1])))
         return t
 
     def register_menu_action(self, action_name, action_desc, handler, hotkey=None):
