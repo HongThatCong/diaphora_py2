@@ -2,7 +2,7 @@
 
 """
 Diaphora, a diffing plugin for IDA
-Copyright (c) 2015-2020, Joxean Koret
+Copyright (c) 2015-2021, Joxean Koret
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -47,8 +47,8 @@ except ImportError:
     is_ida = False
 
 # -------------------------------------------------------------------------------
-VERSION_VALUE = "2.0.4"
-COPYRIGHT_VALUE = "Copyright(c) 2015-2020 Joxean Koret"
+VERSION_VALUE = "2.0.5"
+COPYRIGHT_VALUE = "Copyright(c) 2015-2021 Joxean Koret"
 COMMENT_VALUE = "Diaphora diffing plugin for IDA version %s" % VERSION_VALUE
 
 # Used to clean-up the pseudo-code and assembly dumps in order to get
@@ -81,7 +81,6 @@ def quick_ratio(buf1, buf2):
         print("quick_ratio:", str(sys.exc_info()[1]))
         return 0
 
-
 # -------------------------------------------------------------------------------
 def real_quick_ratio(buf1, buf2):
     try:
@@ -93,7 +92,6 @@ def real_quick_ratio(buf1, buf2):
         print("real_quick_ratio:", str(sys.exc_info()[1]))
         return 0
 
-
 # -------------------------------------------------------------------------------
 def ast_ratio(ast1, ast2):
     if ast1 == ast2:
@@ -102,23 +100,19 @@ def ast_ratio(ast1, ast2):
         return 0
     return difference_ratio(decimal.Decimal(ast1), decimal.Decimal(ast2))
 
-
 # -------------------------------------------------------------------------------
 def log(msg):
     if isinstance(threading.current_thread(), threading._MainThread):
         print("[%s] %s" % (time.asctime(), msg))
 
-
 # -------------------------------------------------------------------------------
-def log_refresh(msg, _show=False, _do_log=True):
+def log_refresh(msg, show=False, do_log=True):
     log(msg)
 
-
 # -------------------------------------------------------------------------------
-def debug_refresh(msg, _show=False):
+def debug_refresh(msg, show=False):
     if os.getenv("DIAPHORA_DEBUG"):
         log(msg)
-
 
 # -------------------------------------------------------------------------------
 class CChooser(object):
@@ -198,14 +192,12 @@ class CChooser(object):
 MAX_PROCESSED_ROWS = 1000000
 TIMEOUT_LIMIT = 60 * 3
 
-
 # -------------------------------------------------------------------------------
 class bytes_encoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, bytes):
             return obj.decode("utf-8")
         return json.JSONEncoder.default(self, obj)
-
 
 # -------------------------------------------------------------------------------
 class CBinDiff:
@@ -656,7 +648,7 @@ class CBinDiff:
         # The last 4 fields are callers, callees, basic_blocks_data & bb_relations
         for prop in props[:len(props) - 4]:
             # XXX: Fixme! This is a hack for 64 bit architectures kernels
-            if type(prop) is long and (prop > 0xFFFFFFFF or prop < -0xFFFFFFFF):
+            if type(prop) is int and (prop > 0xFFFFFFFF or prop < -0xFFFFFFFF):
                 prop = str(prop)
 
             if type(prop) is list or type(prop) is set:
@@ -884,8 +876,8 @@ class CBinDiff:
                     if not mod:
                         # Perfect match, we discovered a basic block equal in both
                         # functions
-                        colours1[key1] = 0x8f001f
-                        colours2[key2] = 0x8f001f
+                        colours1[key1] = 0xffffff
+                        colours2[key2] = 0xffffff
                         dones1.add(key1)
                         dones2.add(key2)
                         break
@@ -896,12 +888,12 @@ class CBinDiff:
                         # NOTE:
                         # Do not add the partial matches to the dones lists, as we
                         # can have complete matches after a partial match!
-                        colours1[key1] = 0xa30a63
-                        colours2[key2] = 0xa30a63
+                        colours1[key1] = 0xCCffff
+                        colours2[key2] = 0xCCffff
                         break
         return colours1, colours2
 
-    def compare_graphs(self, g1, _ea1, g2, _ea2):
+    def compare_graphs(self, g1, ea1, g2, ea2):
         colours1 = {}
         colours2 = {}
         bblocks1 = g1[0]
@@ -909,9 +901,9 @@ class CBinDiff:
 
         # Consider, by default, all blocks added, news
         for key1 in bblocks1:
-            colours1[key1] = 0x14065b
+            colours1[key1] = 0xCCCCFF
         for key2 in bblocks2:
-            colours2[key2] = 0x394304
+            colours2[key2] = 0xCCCCFF
 
         colours1, colours2 = self.compare_graphs_pass(bblocks1, bblocks2, colours1, colours2, False)
         colours1, colours2 = self.compare_graphs_pass(bblocks1, bblocks2, colours1, colours2, True)
@@ -1011,8 +1003,7 @@ class CBinDiff:
             if cg1 == cg2:
                 self.equal_callgraph = True
                 log("Callgraph signature for both databases is equal, the programs seem to be 100% equal structurally")
-                Warning(
-                    "Callgraph signature for both databases is equal, the programs seem to be 100% equal structurally")
+                Warning("Callgraph signature for both databases is equal, the programs seem to be 100% equal structurally")
             else:
                 FACTORS_CACHE[cg1] = cg_factors1
                 FACTORS_CACHE[cg2] = cg_factors2
@@ -1148,12 +1139,10 @@ class CBinDiff:
                     if not t.is_alive():
                         debug_refresh("[Parallel] Heuristic '%s' took %f..." % (t.name, time.time() - t.time))
                         del threads_list[i]
-                        debug_refresh(
-                            "[Parallel] Waiting for any of %d thread(s) running to finish..." % len(threads_list))
+                        debug_refresh("[Parallel] Waiting for any of %d thread(s) running to finish..." % len(threads_list))
                         break
                     else:
-                        log_refresh("[Parallel] %d thread(s) running, waiting for at least one to finish..." % len(
-                            threads_list), do_log=False)
+                        log_refresh("[Parallel] %d thread(s) running, waiting for at least one to finish..." % len(threads_list), do_log=False)
                         t.join(0.1)
                         if is_ida:
                             self.refresh()
@@ -1266,7 +1255,7 @@ class CBinDiff:
         return len(self.matched1) == self.total_functions1 or \
                len(self.matched2) == self.total_functions2
 
-    def add_matches_from_query_ratio(self, sql, _best, partial, unreliable=None, debug=False):
+    def add_matches_from_query_ratio(self, sql, best, partial, unreliable=None, debug=False):
         if self.all_functions_matched():
             return
 
@@ -1598,10 +1587,8 @@ class CBinDiff:
                 should_add = True
                 if self.hooks is not None:
                     if 'on_match' in dir(self.hooks):
-                        d1 = {"ea": ea, "bb": bb1, "name": name1, "ast": ast1, "pseudo": pseudo1, "asm": asm1,
-                              "md": md1}
-                        d2 = {"ea": ea, "bb": bb2, "name": name2, "ast": ast2, "pseudo": pseudo2, "asm": asm2,
-                              "md": md2}
+                        d1 = {"ea": ea, "bb": bb1, "name": name1, "ast": ast1, "pseudo": pseudo1, "asm": asm1, "md": md1}
+                        d2 = {"ea": ea, "bb": bb2, "name": name2, "ast": ast2, "pseudo": pseudo2, "asm": asm2, "md": md2}
                         should_add, r = self.hooks.on_match(d1, d2, desc, ratio)
 
                 if not should_add or name1 in self.matched1 or name2 in self.matched2:
@@ -1673,19 +1660,17 @@ class CBinDiff:
                 should_add = True
                 if self.hooks is not None:
                     if 'on_match' in dir(self.hooks):
-                        d1 = {"ea": ea, "bb": bb1, "name": name1, "ast": ast1, "pseudo": pseudo1, "asm": asm1,
-                              "md": md1}
-                        d2 = {"ea": ea, "bb": bb2, "name": name2, "ast": ast2, "pseudo": pseudo2, "asm": asm2,
-                              "md": md2}
+                        d1 = {"ea": ea, "bb": bb1, "name": name1, "ast": ast1, "pseudo": pseudo1, "asm": asm1, "md": md1}
+                        d2 = {"ea": ea, "bb": bb2, "name": name2, "ast": ast2, "pseudo": pseudo2, "asm": asm2, "md": md2}
                         should_add, ratio = self.hooks.on_match(d1, d2, desc, ratio)
 
                 if not should_add or name1 in self.matched1 or name2 in self.matched2:
                     continue
 
                 if float(ratio) == 1.0 or (self.relaxed_ratio and md1 != 0 and md1 == md2):
-                    self.best_chooser.add_item(CChooser.Item(ea, name, ea2, name, desc, 1, bb1, bb2))
+                    self.best_chooser.add_item(CChooser.Item(ea, name1, ea2, name2, desc, 1, bb1, bb2))
                 else:
-                    choose.add_item(CChooser.Item(ea, name, ea2, name, desc, ratio, bb1, bb2))
+                    choose.add_item(CChooser.Item(ea, name1, ea2, name2, desc, ratio, bb1, bb2))
 
                 self.matched1.add(name)
                 self.matched1.add(name1)
@@ -1736,9 +1721,9 @@ class CBinDiff:
                         if name1 in self.matched1 or name2 in self.matched2:
                             continue
 
-                        r = self.check_ratio(rows[0]["pseudocode_primes"], rows[1]["pseudocode_primes"],
-                                             rows[0]["pseudocode"], rows[1]["pseudocode"],
-                                             rows[0]["assembly"], rows[1]["assembly"],
+                        r = self.check_ratio(rows[0]["pseudocode_primes"], rows[1]["pseudocode_primes"], \
+                                             rows[0]["pseudocode"], rows[1]["pseudocode"], \
+                                             rows[0]["assembly"], rows[1]["assembly"], \
                                              float(rows[0]["md_index"]), float(rows[1]["md_index"]))
                         if r < 0.5:
                             if rows[0]["names"] != "[]" and rows[0]["names"] == rows[1]["names"]:
@@ -1758,13 +1743,16 @@ class CBinDiff:
                             md1 = rows[0]["md_index"]
                             md2 = rows[1]["md_index"]
 
+                            # Pretty much every single heuristic fails with small functions,
+                            # ignore them...
+                            if bb1 <= 3 or bb2 <= 3:
+                                continue
+
                             should_add = True
                             if self.hooks is not None:
                                 if 'on_match' in dir(self.hooks):
-                                    d1 = {"ea": ea, "bb": bb1, "name": name1, "ast": ast1, "pseudo": pseudo1,
-                                          "asm": asm1, "md": md1}
-                                    d2 = {"ea": ea, "bb": bb2, "name": name2, "ast": ast2, "pseudo": pseudo2,
-                                          "asm": asm2, "md": md2}
+                                    d1 = {"ea": ea, "bb": bb1, "name": name1, "ast": ast1, "pseudo": pseudo1, "asm": asm1, "md": md1}
+                                    d2 = {"ea": ea, "bb": bb2, "name": name2, "ast": ast2, "pseudo": pseudo2, "asm": asm2, "md": md2}
                                     should_add, r = self.hooks.on_match(d1, d2, desc, r)
 
                             if not should_add or name1 in self.matched1 or name2 in self.matched2:
@@ -1779,8 +1767,7 @@ class CBinDiff:
                                 self.matched1.add(name1)
                                 self.matched2.add(name2)
                             else:
-                                self.unreliable_chooser.add_item(
-                                    CChooser.Item(ea, name1, ea2, name2, desc, r, bb1, bb2))
+                                self.unreliable_chooser.add_item(CChooser.Item(ea, name1, ea2, name2, desc, r, bb1, bb2))
                                 self.matched1.add(name1)
                                 self.matched2.add(name2)
         finally:
@@ -1805,6 +1792,10 @@ class CBinDiff:
                 name1 = match[2]
                 ea2 = match[3]
                 name2 = match[4]
+                ratio = float(match[5])
+                if ratio < 0.5:
+                    continue
+
                 id1 = self.get_function_id(name1)
                 id2 = self.get_function_id(name2, False)
                 sql = """insert into best_matches (id, id1, ea1, name1, id2, ea2, name2)
@@ -1900,8 +1891,7 @@ class CBinDiff:
                 if len(main_address_set) > 0 and len(diff_address_set) > 0:
                     tname1 = name1.replace("'", "''")
                     tname2 = name2.replace("'", "''")
-                    cur.execute(sql % (("%s of %s/%s" % (call_type, tname1, tname2)), ",".join(main_address_set),
-                                       ",".join(diff_address_set)))
+                    cur.execute(sql % (("%s of %s/%s" % (call_type, tname1, tname2)), ",".join(main_address_set), ",".join(diff_address_set)))
                     matches = self.add_matches_from_cursor_ratio_max(cur, self.partial_chooser, None, min_value)
                     if matches is not None and len(matches) > 0 and self.unreliable:
                         the_items.extend(matches)
@@ -1967,10 +1957,6 @@ class CBinDiff:
         self.add_matches_from_cursor_ratio_max(cur, self.unreliable_chooser, None, 0.5)
 
     def find_experimental_matches(self):
-        # Call address sequence heuristic
-        self.find_from_matches(self.best_chooser.items)
-        self.find_from_matches(self.partial_chooser.items)
-
         self.run_heuristics_for_category("Experimental")
 
         # Find using brute-force
@@ -2129,6 +2115,9 @@ class CBinDiff:
                 log_refresh("Finding partial matches")
                 self.find_matches_parallel()
 
+                # Call address sequence heuristic
+                self.find_from_matches(self.best_chooser.items)
+
                 if self.slow_heuristics:
                     # Find the functions from the callgraph
                     log_refresh("Finding with heuristic 'Callgraph matches'")
@@ -2142,6 +2131,7 @@ class CBinDiff:
                 if self.experimental:
                     # Find using experimental methods modified functions
                     log_refresh("Finding experimental matches")
+                    self.find_from_matches(self.partial_chooser.items)
                     self.find_experimental_matches()
 
                 # Show the list of unmatched functions in both databases

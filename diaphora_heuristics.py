@@ -2,7 +2,7 @@
 
 """
 Diaphora, a diffing plugin for IDA
-Copyright (c) 2015-2019, Joxean Koret
+Copyright (c) 2015-2021, Joxean Koret
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -199,11 +199,33 @@ HEURISTICS.append({
 })
 
 HEURISTICS.append({
+  "name":"Same address and mnemonics",
+  "category":"Best",
+  "ratio":HEUR_TYPE_RATIO,
+  "sql":""" select distinct f.address ea, f.name name1, df.address ea2, df.name name2,
+                   'Same address and mnemonics' description,
+                   f.pseudocode pseudo1, df.pseudocode pseudo2,
+                   f.assembly asm1, df.assembly asm2,
+                   f.pseudocode_primes pseudo_primes1, df.pseudocode_primes pseudo_primes2,
+                   f.nodes bb1, df.nodes bb2,
+                   cast(f.md_index as real) md1, cast(df.md_index as real) md2
+              from functions f,
+                   diff.functions df
+             where df.address = f.address
+               and df.mnemonics = f.mnemonics
+               and df.instructions = f.instructions
+               and df.instructions > 5
+               and ((f.name = df.name and substr(f.name, 1, 4) != 'sub_')
+                 or (substr(f.name, 1, 4) = 'sub_' or substr(df.name, 1, 4)))""",
+  "flags":HEUR_FLAG_NONE
+})
+
+HEURISTICS.append({
     "name": "Same cleaned up assembly",
     "category": "Best",
     "ratio": HEUR_TYPE_RATIO,
     "sql": """ select distinct f.address ea, f.name name1, df.address ea2, df.name name2,
-             'Same cleaned up assembly or pseudo-code' description,
+             'Same cleaned up assembly' description,
              f.pseudocode pseudo1, df.pseudocode pseudo2,
              f.assembly asm1, df.assembly asm2,
              f.pseudocode_primes pseudo_primes1, df.pseudocode_primes pseudo_primes2,
@@ -223,7 +245,7 @@ HEURISTICS.append({
     "category": "Best",
     "ratio": HEUR_TYPE_RATIO,
     "sql": """ select distinct f.address ea, f.name name1, df.address ea2, df.name name2,
-             'Same cleaned up assembly or pseudo-code' description,
+             'Same cleaned pseudo-code' description,
              f.pseudocode pseudo1, df.pseudocode pseudo2,
              f.assembly asm1, df.assembly asm2,
              f.pseudocode_primes pseudo_primes1, df.pseudocode_primes pseudo_primes2,
@@ -400,9 +422,11 @@ HEURISTICS.append({
             diff.functions df
       where mc.constant = dc.constant
         and  f.id = mc.func_id
-        and df.id = dc.func_id""",
+        and df.id = dc.func_id
+        and f.nodes > 3 and df.nodes > 3
+        and f.constants_count > 0""",
     "min": 0.2,
-    "flags": HEUR_FLAG_NONE
+  "flags":HEUR_FLAG_SLOW
 })
 
 HEURISTICS.append({
@@ -926,25 +950,6 @@ HEURISTICS.append({
 })
 
 HEURISTICS.append({
-    "name": "Equal small pseudo-code",
-    "category": "Experimental",
-    "ratio": HEUR_TYPE_RATIO,
-    "sql": """select f.address ea, f.name name1, df.address ea2, df.name name2, 'Equal small pseudo-code' description,
-            f.pseudocode pseudo1, df.pseudocode pseudo2,
-            f.assembly asm1, df.assembly asm2,
-            f.pseudocode_primes pseudo_primes1, df.pseudocode_primes pseudo_primes2,
-            f.nodes bb1, df.nodes bb2,
-            cast(f.md_index as real) md1, cast(df.md_index as real) md2
-       from functions f,
-            diff.functions df
-      where f.pseudocode = df.pseudocode
-        and df.pseudocode is not null
-        and f.pseudocode_lines < 5
-        %POSTFIX%""",
-    "flags": HEUR_FLAG_NONE
-})
-
-HEURISTICS.append({
     "name": "Same low complexity, prototype and names",
     "category": "Experimental",
     "ratio": HEUR_TYPE_RATIO_MAX,
@@ -1237,6 +1242,24 @@ HEURISTICS.append({
     "flags": HEUR_FLAG_SLOW
 })
 
+HEURISTICS.append({
+  "name":"Equal small pseudo-code",
+  "category":"Unreliable",
+  "ratio":HEUR_TYPE_RATIO,
+  "sql":"""select f.address ea, f.name name1, df.address ea2, df.name name2, 'Equal small pseudo-code' description,
+            f.pseudocode pseudo1, df.pseudocode pseudo2,
+            f.assembly asm1, df.assembly asm2,
+            f.pseudocode_primes pseudo_primes1, df.pseudocode_primes pseudo_primes2,
+            f.nodes bb1, df.nodes bb2,
+            cast(f.md_index as real) md1, cast(df.md_index as real) md2
+       from functions f,
+            diff.functions df
+      where f.pseudocode = df.pseudocode
+        and df.pseudocode is not null
+        and f.pseudocode_lines < 5
+        %POSTFIX%""",
+  "flags":HEUR_FLAG_NONE
+})
 
 # -------------------------------------------------------------------------------
 def check_categories():
@@ -1250,7 +1273,6 @@ def check_categories():
     pprint.pprint(categories)
 
     assert (categories == set(['Best', 'Experimental', 'Partial', 'Unreliable']))
-
 
 # -------------------------------------------------------------------------------
 def check_dupes():
@@ -1274,8 +1296,7 @@ def check_dupes():
     import pprint
     pprint.pprint(dups)
 
-    assert (dups == [['Similar small pseudo-code', 2], ['Loop count', 2]])
-
+    assert(sorted(dups) == sorted([['Similar small pseudo-code', 2], ['Loop count', 2]]) )
 
 # -------------------------------------------------------------------------------
 def check_heuristic_in_sql():
@@ -1298,7 +1319,6 @@ def check_heuristic_in_sql():
     import pprint
     pprint.pprint(heurs)
 
-
 # -------------------------------------------------------------------------------
 def check_heuristics_ratio():
     from collections import Counter
@@ -1316,7 +1336,7 @@ def check_heuristics_ratio():
     import pprint
     pprint.pprint(ratios)
 
-    assert (ratios == Counter({1: 28, 2: 14, 0: 7}))
+    assert(ratios == Counter({1: 29, 2: 18, 0: 7}))
 
 
 # -------------------------------------------------------------------------------
@@ -1324,18 +1344,17 @@ def check_mandatory_fields():
     mandatory = set(["name", "ratio", "category", "sql", "flags"])
     for heur in HEURISTICS:
         for field in mandatory:
-            if field not in heur.keys():
+            if field not in list(heur.keys()):
                 print("Field '%s' not found in heuristic!" % field)
                 print(heur)
-                assert (field in heur.keys())
-
+                assert(field in list(heur.keys()))
 
 # -------------------------------------------------------------------------------
 def check_field_names():
     expected = set(["name", "ratio", "category", "min", "sql", "flags"])
     fields = set()
     for heur in HEURISTICS:
-        for field in heur.keys():
+        for field in list(heur.keys()):
             if field not in expected:
                 print("Invalid field '%s' found for heuristic!" % field)
                 print(heur)
@@ -1351,7 +1370,6 @@ def check_field_names():
 
     import pprint
     pprint.pprint(fields)
-
 
 # -------------------------------------------------------------------------------
 def run_tests():

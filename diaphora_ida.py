@@ -73,22 +73,19 @@ instructions' option."""
 
 LITTLE_ORANGE = 0x026AFD
 
-
 # -------------------------------------------------------------------------------
 def log(message):
     msg("[%s] %s\n" % (time.asctime(), message))
 
-
 # -------------------------------------------------------------------------------
-def log_refresh(_msg, show=False, do_log=True):
+def log_refresh(msg, show=False, do_log=True):
     if show:
-        show_wait_box(_msg)
+        show_wait_box(msg)
     else:
-        replace_wait_box(_msg)
+        replace_wait_box(msg)
 
     if do_log:
-        log(_msg)
-
+        log(msg)
 
 # -------------------------------------------------------------------------------
 # TODO: FIX hack
@@ -98,12 +95,10 @@ diaphora.log_refresh = log_refresh
 # -------------------------------------------------------------------------------
 g_bindiff = None
 
-
 def show_choosers():
     global g_bindiff
     if g_bindiff is not None:
         g_bindiff.show_choosers(False)
-
 
 # -------------------------------------------------------------------------------
 def save_results():
@@ -113,6 +108,14 @@ def save_results():
         if filename is not None:
             g_bindiff.save_results(filename)
 
+#-------------------------------------------------------------------------------
+def load_and_import_all_results(filename, main_db, diff_db):
+    tmp_diff = CIDABinDiff(":memory:")
+
+    if(os.path.exists(filename) and os.path.exists(main_db) and os.path.exists(diff_db)):
+        tmp_diff.load_and_import_all_results(filename, main_db, diff_db)
+
+    idaapi.qexit(0)
 
 # -------------------------------------------------------------------------------
 def load_results():
@@ -121,22 +124,19 @@ def load_results():
     if filename is not None:
         tmp_diff.load_results(filename)
 
-
 # -------------------------------------------------------------------------------
 def import_definitions():
-    tmp_diff = CIDABinDiff(":memory:")
+    tmp_diff = diaphora.CIDABinDiff(":memory:")
     filename = ask_file(0, "*.sqlite", "Select the file to import structures, unions and enumerations from")
     if filename is not None:
         if ask_yn(1, "HIDECANCEL\nDo you really want to import all structures, unions and enumerations?") == 1:
             tmp_diff.import_definitions_only(filename)
-
 
 # -------------------------------------------------------------------------------
 def diaphora_decode(ea):
     ins = idaapi.insn_t()
     decoded_size = idaapi.decode_insn(ins, ea)
     return decoded_size, ins
-
 
 # -------------------------------------------------------------------------------
 class CHtmlViewer(PluginForm):
@@ -163,7 +163,6 @@ class CHtmlViewer(PluginForm):
         self.text = text
         return PluginForm.Show(self, title)
 
-
 # -------------------------------------------------------------------------------
 class CBasicChooser(Choose):
     def __init__(self, title):
@@ -179,7 +178,6 @@ class CBasicChooser(Choose):
 
     def OnGetLine(self, n):
         return self.items[n]
-
 
 # -------------------------------------------------------------------------------
 # Hex-Rays finally removed AddCommand(). Now, instead of a 1 line call, we need
@@ -203,7 +201,6 @@ class command_handler_t(ida_kernwin.action_handler_t):
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
 
-
 # -------------------------------------------------------------------------------
 # Support for the removed AddCommand() API
 class CDiaphoraChooser(diaphora.CChooser, Choose):
@@ -224,7 +221,7 @@ class CDiaphoraChooser(diaphora.CChooser, Choose):
         return len(self.actions) - 1
 
     def OnPopup(self, form, popup_handle):
-        for num, _action_name, menu_name, shortcut in self.actions:
+        for num, action_name, menu_name, shortcut in self.actions:
             if menu_name is None:
                 ida_kernwin.attach_action_to_popup(form, popup_handle, None)
             else:
@@ -466,7 +463,6 @@ class CIDAChooser(CDiaphoraChooser):
             return [color, 0]
         return [0xFFFFFF, 0]
 
-
 # -------------------------------------------------------------------------------
 class CBinDiffExporterSetup(Form):
     def __init__(self):
@@ -562,7 +558,6 @@ class CBinDiffExporterSetup(Form):
         )
         return BinDiffOptions(**opts)
 
-
 # -------------------------------------------------------------------------------
 class timeraction_t(object):
     def __init__(self, func, args, interval):
@@ -580,7 +575,6 @@ class timeraction_t(object):
             self.func()
         return -1
 
-
 # -------------------------------------------------------------------------------
 class uitimercallback_t(object):
     def __init__(self, g, interval):
@@ -595,7 +589,6 @@ class uitimercallback_t(object):
         activate_widget(f, 1)
         process_ui_action("GraphZoomFit", 0)
         return -1
-
 
 # -------------------------------------------------------------------------------
 class CDiffGraphViewer(GraphViewer):
@@ -638,19 +631,18 @@ class CDiffGraphViewer(GraphViewer):
             if ea in self.colours:
                 colour = self.colours[ea]
             else:
-                colour = 0x0000FF
+                colour = 0xFFFFFF
             ret = []
             for row in rows:
                 ret.append(row[2])
             label = "\n".join(ret)
-            return label, colour
+            return (label, colour)
         except:
             print("GraphViewer.OnGetText:", sys.exc_info()[1])
-            return "ERROR", 0x000000
+            return ("ERROR", 0x000000)
 
     def Show(self):
         return GraphViewer.Show(self)
-
 
 # -------------------------------------------------------------------------------
 class CIdaMenuHandlerShowChoosers(idaapi.action_handler_t):
@@ -664,7 +656,6 @@ class CIdaMenuHandlerShowChoosers(idaapi.action_handler_t):
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
 
-
 # -------------------------------------------------------------------------------
 class CIdaMenuHandlerSaveResults(idaapi.action_handler_t):
     def __init__(self):
@@ -677,7 +668,6 @@ class CIdaMenuHandlerSaveResults(idaapi.action_handler_t):
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
 
-
 # -------------------------------------------------------------------------------
 class CIdaMenuHandlerLoadResults(idaapi.action_handler_t):
     def __init__(self):
@@ -689,7 +679,6 @@ class CIdaMenuHandlerLoadResults(idaapi.action_handler_t):
 
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
-
 
 # -------------------------------------------------------------------------------
 class CIDABinDiff(diaphora.CBinDiff):
@@ -880,7 +869,7 @@ class CIDABinDiff(diaphora.CBinDiff):
             crashed_before = True
 
         log("Creating crash file %s..." % crash_file)
-        with open(crash_file, "wb") as _f:
+        with open(crash_file, "wb") as f:
             pass    # HTC - Don't need to call f.close()
 
         try:
@@ -947,7 +936,7 @@ class CIDABinDiff(diaphora.CBinDiff):
                 except:
                     log("Error importing type: %s" % str(sys.exc_info()[1]))
 
-        for _ in xrange(10):
+        for _ in range(10):
             for row in new_rows:
                 if row["name"] is None:
                     continue
@@ -1132,7 +1121,7 @@ class CIDABinDiff(diaphora.CBinDiff):
             fmt.linenos = False
             fmt.nobackground = True
             if not html:
-                uni_diff = difflib.unified_diff(buf1.split("\n"), buf2.split("\n"))
+                uni_diff = difflib.unified_diff(buf2.split("\n"), buf1.split("\n"))
                 tmp = []
                 for line in uni_diff:
                     tmp.append(line.strip("\n"))
@@ -1141,9 +1130,9 @@ class CIDABinDiff(diaphora.CBinDiff):
 
                 src = highlight(buf, DiffLexer(), fmt)
             else:
-                src = html_diff.make_file(buf1.split("\n"), buf2.split("\n"), fmt, CppLexer())
+                src = html_diff.make_file(buf2.split("\n"), buf1.split("\n"), fmt, CppLexer())
 
-            title = "Diff pseudo-code %s - %s" % (row1["name"], row2["name"])
+            title = "Diff pseudo-code %s - %s" % (row2["name"], row1["name"])
             cdiffer = CHtmlViewer()
             cdiffer.Show(src, title)
 
@@ -1174,7 +1163,7 @@ class CIDABinDiff(diaphora.CBinDiff):
 
     def import_instruction(self, ins_data1, ins_data2):
         ea1 = self.get_base_address() + int(ins_data1[0])
-        _ea2, cmt1, cmt2, name, mtype, _mdis, mcmt, mitp = ins_data2
+        ea2, cmt1, cmt2, name, mtype, mdis, mcmt, mitp = ins_data2
         # Set instruction level comments
         if cmt1 is not None and get_cmt(ea1, 0) is None:
             set_cmt(ea1, cmt1, 0)
@@ -1193,7 +1182,7 @@ class CIDABinDiff(diaphora.CBinDiff):
                 cfunc.save_user_cmts()
 
         tmp_ea = None
-        type_set = False
+        set_type = False
         data_refs = list(DataRefsFrom(ea1))
         if len(data_refs) > 0:
             # Global variables
@@ -1202,7 +1191,7 @@ class CIDABinDiff(diaphora.CBinDiff):
                 curr_name = get_ea_name(tmp_ea)
                 if curr_name != name and self.is_auto_generated(curr_name):
                     set_name(tmp_ea, name, SN_CHECK)
-                    type_set = False
+                    set_type = False
             else:
                 # If it's an object, we don't want to rename the offset, we want to
                 # rename the true global variable.
@@ -1210,7 +1199,7 @@ class CIDABinDiff(diaphora.CBinDiff):
                     tmp_ea = next(DataRefsFrom(tmp_ea), tmp_ea)
 
                 set_name(tmp_ea, name, SN_CHECK)
-                type_set = True
+                set_type = True
         else:
             # Functions
             code_refs = list(CodeRefsFrom(ea1, 0))
@@ -1222,9 +1211,9 @@ class CIDABinDiff(diaphora.CBinDiff):
                 if curr_name != name and self.is_auto_generated(curr_name):
                     set_name(code_refs[0], name, SN_CHECK)
                     tmp_ea = code_refs[0]
-                    type_set = True
+                    set_type = True
 
-        if tmp_ea is not None and type_set:
+        if tmp_ea is not None and set_type:
             if mtype is not None and idc.get_type(tmp_ea) != mtype:
                 if type(mtype) is bytes:
                     mtype = mtype.decode("utf-8")
@@ -1244,7 +1233,7 @@ class CIDABinDiff(diaphora.CBinDiff):
             return True
 
         # Has a name
-        if import_syms[ea][2] is not None:
+        if import_syms[ea][3] is not None:
             return True
 
         # Has pseudocode comment
@@ -1317,7 +1306,7 @@ class CIDABinDiff(diaphora.CBinDiff):
 
                         diff_list = difflib._mdiff(lines1.splitlines(1), lines2.splitlines(1))
                         for x in diff_list:
-                            left, right, _ignore = x
+                            left, right, ignore = x
                             left_line = left[0]
                             right_line = right[0]
 
@@ -1333,9 +1322,10 @@ class CIDABinDiff(diaphora.CBinDiff):
                             if changed or is_importable:
                                 ea1 = str(ea1)
                                 ea2 = str(ea2)
+                                if ea1 in matched_syms and ea2 in import_syms:
+                                    self.import_instruction(matched_syms[ea1], import_syms[ea2])
                                 if ea2 in matched_syms and ea1 in import_syms:
                                     self.import_instruction(matched_syms[ea2], import_syms[ea1])
-
         finally:
             cur.close()
 
@@ -1464,24 +1454,24 @@ class CIDABinDiff(diaphora.CBinDiff):
         return decompile(f)
 
     def decompile_and_get(self, ea):
-        if not self.decompiler_available:
-            return None
+        if not self.decompiler_available or is_spec_ea(ea):
+            return False
 
         decompiler_plugin = os.getenv("DIAPHORA_DECOMPILER_PLUGIN")
         if decompiler_plugin is None:
             decompiler_plugin = "hexrays"
         if not init_hexrays_plugin() and not (load_plugin(decompiler_plugin) and init_hexrays_plugin()):
             self.decompiler_available = False
-            return None
+            return False
 
         f = get_func(ea)
         if f is None:
-            return None
+            return False
 
         cfunc = self.do_decompile(f)
         if cfunc is None:
             # Failed to decompile
-            return None
+            return False
 
         visitor = CAstVisitor(cfunc)
         visitor.apply_to(cfunc.body, None)
@@ -1489,7 +1479,7 @@ class CIDABinDiff(diaphora.CBinDiff):
 
         cmts = idaapi.restore_user_cmts(cfunc.entry_ea)
         if cmts is not None:
-            for tl, cmt in cmts.iteritems():
+            for tl, cmt in cmts.items():
                 self.pseudo_comments[tl.ea - self.get_base_address()] = [str(cmt), tl.itp]
 
         sv = cfunc.get_pseudocode()
@@ -1561,7 +1551,7 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
         @return: C{True} if value should be included in query. C{False} otherwise
         """
         # no small values
-        if value < 0x10000:
+        if value < 0x1000:
             return False
 
         if value & 0xFFFFFF00 == 0xFFFFFF00 or value & 0xFFFF00 == 0xFFFF00 or \
@@ -1570,7 +1560,7 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
             return False
 
         # no single bits sets - mostly defines / flags
-        for i in xrange(64):
+        for i in range(64):
             if value == (1 << i):
                 return False
 
@@ -1584,7 +1574,7 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
 
         return True
 
-    def read_function(self, f, _discard=False):
+    def read_function(self, f, discard=False):
         name = get_func_name(int(f))
         true_name = name
         demangle_named_name = demangle_name(name, INF_SHORT_DN)
@@ -1597,7 +1587,7 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
         if self.hooks is not None:
             ret = self.hooks.before_export_function(f, name)
             if not ret:
-                return ret
+                return False
 
         f = int(f)
         func = get_func(f)
@@ -1707,7 +1697,6 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
                     if len(drefs) > 0:
                         for dref in drefs:
                             if get_func(dref) is None:
-                                # str_constant = get_strlit_contents(dref, -1, -1)
                                 str_constant = idc.get_strlit_contents(dref)
                                 if str_constant is not None:
                                     str_constant = str_constant.decode("utf-8", "backslashreplace")
@@ -1774,13 +1763,13 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
                         # returned object is not iterable.
                         can_iter = False
                         switch_cases_values = set()
-                        for idx in xrange(len(results.cases)):
+                        for idx in range(len(results.cases)):
                             cur_case = results.cases[idx]
                             if '__iter__' not in dir(cur_case):
                                 break
 
                             can_iter |= True
-                            for cidx in xrange(len(cur_case)):
+                            for cidx in range(len(cur_case)):
                                 case_id = cur_case[cidx]
                                 switch_cases_values.add(case_id)
 
@@ -1807,7 +1796,7 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
 
                 edges += 1
                 indegree += 1
-                if not dones.has_key(succ_block.id):
+                if succ_block.id not in dones:
                     dones[succ_block] = 1
 
             for pred_block in block.preds():
@@ -1821,7 +1810,7 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
 
                 edges += 1
                 outdegree += 1
-                if not dones.has_key(pred_block.id):
+                if pred_block.id not in dones:
                     dones[pred_block] = 1
 
         for block in flow:
@@ -1863,7 +1852,7 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
                     loops += 1
 
         asm = []
-        keys = assembly.keys()
+        keys = list(assembly.keys())
         keys.sort()
 
         # Collect the ordered list of addresses, as shown in the assembly
@@ -1892,9 +1881,8 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
             prime = 0
 
         comment = idc.get_func_cmt(f, 1)
-
-        bytes_hash = hashlib.md5("".join(bytes_hash)).hexdigest()
-        function_hash = hashlib.md5("".join(function_hash)).hexdigest()
+        bytes_hash = hashlib.md5(b"".join(bytes_hash)).hexdigest()
+        function_hash = hashlib.md5(b"".join(function_hash)).hexdigest()
 
         function_flags = get_func_attr(f, FUNCATTR_FLAGS)
         pseudo = None
@@ -2010,11 +1998,11 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
             d["seg_rva"],
             d["assembly_addrs"],
             d["kgh_hash"],
+            d["userdata"],
             d["callers"],
             d["callees"],
             d["basic_blocks_data"],
-            d["bb_relations"],
-            d["userdata"])
+            d["bb_relations"])
         return l
 
     def create_function_dictionary(self, l):
@@ -2135,7 +2123,7 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
 
     def get_til_names(self):
         idb_path = get_idb_path()
-        filename, _ext = os.path.splitext(idb_path)
+        filename, ext = os.path.splitext(idb_path)
         til_path = "%s.til" % filename
 
         with open(til_path, "rb") as f:
@@ -2154,6 +2142,74 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
         if til_names is not None:
             for til in til_names:
                 self.add_program_data("til", til, None)
+
+
+    def load_and_import_all_results(self, filename, main_db, diff_db):
+        results_db = sqlite3.connect(filename, check_same_thread=False)
+        results_db.text_factory = str
+        results_db.row_factory = sqlite3.Row
+
+        cur = results_db.cursor()
+        try:
+            sql = "select main_db, diff_db, version from config"
+            cur.execute(sql)
+            rows = cur.fetchall()
+            if len(rows) != 1:
+                Warning("Malformed results database!")
+                return False
+
+            row = rows[0]
+            version = row["version"]
+            if version != diaphora.VERSION_VALUE:
+                msg = "The version of the diff results is %s and current version is %s, there can be some incompatibilities."
+                Warning(msg % (version, diaphora.VERSION_VALUE))
+
+            self.reinit(main_db, diff_db)
+
+            sql = "select * from results"
+            cur.execute(sql)
+            for row in diaphora.result_iter(cur):
+                if row["type"] == "best":
+                    choose = self.best_chooser
+                elif row["type"] == "partial":
+                    choose = self.partial_chooser
+                else:
+                    choose = self.unreliable_chooser
+
+                ea1 = int(row["address"], 16)
+                name1 = row["name"]
+                ea2 = int(row["address2"], 16)
+                name2 = row["name2"]
+                desc = row["description"]
+                ratio = float(row["ratio"])
+
+                # I don't think we want to import results with such a bad ratio
+                if ratio < 0.5:
+                    continue
+
+                bb1 = int(row["bb1"])
+                bb2 = int(row["bb2"])
+
+                choose.add_item(diaphora.CChooser.Item(ea1, name1, ea2, name2, desc, ratio, bb1, bb2))
+
+            sql = "select * from unmatched"
+            cur.execute(sql)
+            for row in diaphora.result_iter(cur):
+                if row["type"] == "primary":
+                    choose = self.unmatched_primary
+                else:
+                    choose = self.unmatched_second
+                choose.add_item(diaphora.CChooser.Item(int(row["address"], 16), row["name"]))
+
+            self.import_all_auto(self.best_chooser.items)
+            self.import_all_auto(self.partial_chooser.items)
+
+            return True
+        finally:
+            cur.close()
+            results_db.close()
+
+        return False
 
     def load_results(self, filename):
         results_db = sqlite3.connect(filename, check_same_thread=False)
@@ -2230,6 +2286,8 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
             cur.close()
             results_db.close()
 
+        return False
+
     def re_diff(self):
         self.best_chooser.Close()
         self.partial_chooser.Close()
@@ -2248,7 +2306,6 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
             if ask_yn(0, "HIDECANCEL\nThe databases seems to be 100% equal. Do you want to continue anyway?") != 1:
                 self.do_continue = False
         return are_equal
-
 
 # -------------------------------------------------------------------------------
 def _diff_or_export(use_ui, **options):
@@ -2514,7 +2571,6 @@ class CHtmlDiff(object):
         else:
             return s
 
-
 # -------------------------------------------------------------------------------
 try:
     class CAstVisitorInherits(ctree_visitor_t):
@@ -2522,7 +2578,6 @@ try:
 except:
     class CAstVisitorInherits(object):
         pass
-
 
 # -------------------------------------------------------------------------------
 class CAstVisitor(CAstVisitorInherits):
@@ -2547,14 +2602,12 @@ class CAstVisitor(CAstVisitorInherits):
             traceback.print_exc()
         return 0
 
-
 # -------------------------------------------------------------------------------
 def is_ida_file(filename):
     filename = filename.lower()
     return filename.endswith(".idb") or filename.endswith(".i64") or \
            filename.endswith(".til") or filename.endswith(".id0") or \
            filename.endswith(".id1") or filename.endswith(".nam")
-
 
 # -------------------------------------------------------------------------------
 def remove_file(filename):
@@ -2579,7 +2632,6 @@ def remove_file(filename):
                     db.execute("drop table if exists %s" % func)
             finally:
                 cur.close()
-
 
 # -------------------------------------------------------------------------------
 def main():
