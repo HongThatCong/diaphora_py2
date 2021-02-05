@@ -44,7 +44,7 @@ from idaapi import *
 from idautils import *
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # Constants unexported in IDA Python
 PRTYPE_SEMI = 0x0008
 
@@ -73,11 +73,11 @@ instructions' option."""
 
 LITTLE_ORANGE = 0x026AFD
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def log(message):
     msg("[%s] %s\n" % (time.asctime(), message))
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def log_refresh(msg, show=False, do_log=True):
     if show:
         show_wait_box(msg)
@@ -87,12 +87,12 @@ def log_refresh(msg, show=False, do_log=True):
     if do_log:
         log(msg)
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # TODO: FIX hack
 diaphora.log = log
 diaphora.log_refresh = log_refresh
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 g_bindiff = None
 
 def show_choosers():
@@ -100,7 +100,7 @@ def show_choosers():
     if g_bindiff is not None:
         g_bindiff.show_choosers(False)
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def save_results():
     global g_bindiff
     if g_bindiff is not None:
@@ -117,14 +117,14 @@ def load_and_import_all_results(filename, main_db, diff_db):
 
     idaapi.qexit(0)
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def load_results():
     tmp_diff = CIDABinDiff(":memory:")
     filename = ask_file(0, "*.diaphora", "Select the file to load diffing results")
     if filename is not None:
         tmp_diff.load_results(filename)
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def import_definitions():
     tmp_diff = diaphora.CIDABinDiff(":memory:")
     filename = ask_file(0, "*.sqlite", "Select the file to import structures, unions and enumerations from")
@@ -132,13 +132,13 @@ def import_definitions():
         if ask_yn(1, "HIDECANCEL\nDo you really want to import all structures, unions and enumerations?") == 1:
             tmp_diff.import_definitions_only(filename)
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def diaphora_decode(ea):
     ins = idaapi.insn_t()
     decoded_size = idaapi.decode_insn(ins, ea)
     return decoded_size, ins
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class CHtmlViewer(PluginForm):
     def OnCreate(self, form):
         self.parent = self.FormToPyQtWidget(form)
@@ -163,7 +163,7 @@ class CHtmlViewer(PluginForm):
         self.text = text
         return PluginForm.Show(self, title)
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class CBasicChooser(Choose):
     def __init__(self, title):
         Choose.__init__(
@@ -179,7 +179,7 @@ class CBasicChooser(Choose):
     def OnGetLine(self, n):
         return self.items[n]
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # Hex-Rays finally removed AddCommand(). Now, instead of a 1 line call, we need
 # 2 classes...
 class command_handler_t(ida_kernwin.action_handler_t):
@@ -201,7 +201,7 @@ class command_handler_t(ida_kernwin.action_handler_t):
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # Support for the removed AddCommand() API
 class CDiaphoraChooser(diaphora.CChooser, Choose):
     def __init__(self, title, bindiff, show_commands=True):
@@ -231,7 +231,7 @@ class CDiaphoraChooser(diaphora.CChooser, Choose):
                 ida_kernwin.attach_dynamic_action_to_popup(form, popup_handle, desc)
 
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class CIDAChooser(CDiaphoraChooser):
 
     def __init__(self, title, bindiff, show_commands=True):
@@ -463,7 +463,7 @@ class CIDAChooser(CDiaphoraChooser):
             return [color, 0]
         return [0xFFFFFF, 0]
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class CBinDiffExporterSetup(Form):
     def __init__(self):
         s = r"""Diaphora
@@ -558,7 +558,7 @@ class CBinDiffExporterSetup(Form):
         )
         return BinDiffOptions(**opts)
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class timeraction_t(object):
     def __init__(self, func, args, interval):
         self.func = func
@@ -575,7 +575,7 @@ class timeraction_t(object):
             self.func()
         return -1
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class uitimercallback_t(object):
     def __init__(self, g, interval):
         self.interval = interval
@@ -590,7 +590,7 @@ class uitimercallback_t(object):
         process_ui_action("GraphZoomFit", 0)
         return -1
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class CDiffGraphViewer(GraphViewer):
     def __init__(self, title, g, colours):
         try:
@@ -644,7 +644,7 @@ class CDiffGraphViewer(GraphViewer):
     def Show(self):
         return GraphViewer.Show(self)
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class CIdaMenuHandlerShowChoosers(idaapi.action_handler_t):
     def __init__(self):
         idaapi.action_handler_t.__init__(self)
@@ -656,7 +656,7 @@ class CIdaMenuHandlerShowChoosers(idaapi.action_handler_t):
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class CIdaMenuHandlerSaveResults(idaapi.action_handler_t):
     def __init__(self):
         idaapi.action_handler_t.__init__(self)
@@ -668,7 +668,7 @@ class CIdaMenuHandlerSaveResults(idaapi.action_handler_t):
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class CIdaMenuHandlerLoadResults(idaapi.action_handler_t):
     def __init__(self):
         idaapi.action_handler_t.__init__(self)
@@ -680,7 +680,7 @@ class CIdaMenuHandlerLoadResults(idaapi.action_handler_t):
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class CIDABinDiff(diaphora.CBinDiff):
     def __init__(self, db_name):
         diaphora.CBinDiff.__init__(self, db_name, chooser=CIDAChooser)
@@ -2307,7 +2307,7 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
                 self.do_continue = False
         return are_equal
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def _diff_or_export(use_ui, **options):
     global g_bindiff
 
@@ -2434,7 +2434,7 @@ def _diff_or_export(use_ui, **options):
     return bd
 
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class BinDiffOptions(object):
     def __init__(self, **kwargs):
         total_functions = len(list(Functions()))
@@ -2465,7 +2465,7 @@ class BinDiffOptions(object):
         self.project_script = kwargs.get('project_script')
 
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class CHtmlDiff(object):
     """A replacement for difflib.HtmlDiff that tries to enforce a max width
 
@@ -2571,7 +2571,7 @@ class CHtmlDiff(object):
         else:
             return s
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 try:
     class CAstVisitorInherits(ctree_visitor_t):
         pass
@@ -2579,7 +2579,7 @@ except:
     class CAstVisitorInherits(object):
         pass
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class CAstVisitor(CAstVisitorInherits):
     def __init__(self, cfunc):
         self.primes = primes(4096)
@@ -2602,14 +2602,14 @@ class CAstVisitor(CAstVisitorInherits):
             traceback.print_exc()
         return 0
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def is_ida_file(filename):
     filename = filename.lower()
     return filename.endswith(".idb") or filename.endswith(".i64") or \
            filename.endswith(".til") or filename.endswith(".id0") or \
            filename.endswith(".id1") or filename.endswith(".nam")
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def remove_file(filename):
     try:
         os.remove(filename)
@@ -2633,7 +2633,7 @@ def remove_file(filename):
             finally:
                 cur.close()
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def main():
     global g_bindiff
     if os.getenv("DIAPHORA_AUTO") is not None:

@@ -18,7 +18,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # Use only for heuristics generating 1.0 ratios, results without false positives
 HEUR_TYPE_NO_FPS = 0
 
@@ -31,12 +31,12 @@ HEUR_TYPE_RATIO = 1
 # min specified ratio.
 HEUR_TYPE_RATIO_MAX = 2
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 HEUR_FLAG_NONE = 0
 HEUR_FLAG_UNRELIABLE = 1
 HEUR_FLAG_SLOW = 2
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 HEURISTICS = []
 HEURISTICS.append({
     "name": "Same RVA and hash",
@@ -1261,7 +1261,7 @@ HEURISTICS.append({
   "flags":HEUR_FLAG_NONE
 })
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def check_categories():
     categories = set()
     for heur in HEURISTICS:
@@ -1274,7 +1274,7 @@ def check_categories():
 
     assert (categories == set(['Best', 'Experimental', 'Partial', 'Unreliable']))
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def check_dupes():
     from collections import Counter
     heurs = Counter()
@@ -1298,7 +1298,7 @@ def check_dupes():
 
     assert(sorted(dups) == sorted([['Similar small pseudo-code', 2], ['Loop count', 2]]) )
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def check_heuristic_in_sql():
     heurs = set()
     excluded = ["Equal assembly or pseudo-code", "All or most attributes"]
@@ -1319,7 +1319,7 @@ def check_heuristic_in_sql():
     import pprint
     pprint.pprint(heurs)
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def check_heuristics_ratio():
     from collections import Counter
     ratios = Counter()
@@ -1339,7 +1339,7 @@ def check_heuristics_ratio():
     assert(ratios == Counter({1: 29, 2: 18, 0: 7}))
 
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def check_mandatory_fields():
     mandatory = set(["name", "ratio", "category", "sql", "flags"])
     for heur in HEURISTICS:
@@ -1349,7 +1349,7 @@ def check_mandatory_fields():
                 print(heur)
                 assert(field in list(heur.keys()))
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def check_field_names():
     expected = set(["name", "ratio", "category", "min", "sql", "flags"])
     fields = set()
@@ -1371,7 +1371,7 @@ def check_field_names():
     import pprint
     pprint.pprint(fields)
 
-# -------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def run_tests():
     print("Running tests...\n")
     check_categories()

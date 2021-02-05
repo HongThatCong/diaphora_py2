@@ -207,7 +207,7 @@ def difference_matrix(samples, debug=True):
   diff_matrix = {}
   for x in samples:
     if debug:
-      print ("Calculating difference matrix for %s" % x)
+      print("Calculating difference matrix for %s" % x)
     if not diff_matrix.has_key(x):
       diff_matrix[x] = {}
     for y in samples:

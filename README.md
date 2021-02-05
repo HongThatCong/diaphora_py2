@@ -2,7 +2,7 @@
 
 Diaphora (διαφορά, Greek for 'difference') version 2.0 is the most advanced program diffing tool, working as an IDA plugin, available as of today (2019). It was released first during SyScan 2015 and is actively maintained.
 
-Diaphora supports IDA 6.9 to 7.4, but the main branch has support only for IDA >= 7.4 because the code only runs in Python 3.X.
+Diaphora supports IDA 6.9 to 7.5, but the main branch has support only for IDA >= 7.4 because the code only runs in Python 3.X.
 
 Support for Ghidra is in development, but it will take very long. Support for Binary Ninja is also planned but will probably come after Ghidra's port. If you are looking for Radare2 support, you can [check this very old fork](https://github.com/radare/diaphora).
 
@@ -88,3 +88,4 @@ Here is a screenshot of Diaphora diffing [iBoot from iOS 10.3.3 against iOS 11.0
 ## 2020/07/16:
 1. Port downto IDA 7.0 - 7.3 and Python 2.7 by Ngon Nguyen (Cat Bui)
 2. Fix "database was locked" bug and add clipboard commands by HTC (VinCSS)
+3. Add popup menu for Copy Name, EA...
