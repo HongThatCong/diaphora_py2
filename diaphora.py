@@ -764,7 +764,7 @@ class CBinDiff:
         cur.close()
 
     def get_valid_definition(self, defs):
-        """ 
+        """
         Try to get a valid structure definition by removing (yes) the
         invalid characters typically found in IDA's generated structs.
         """
@@ -1591,7 +1591,7 @@ class CBinDiff:
                     if 'on_match' in dir(self.hooks):
                         d1 = {"ea": ea, "bb": bb1, "name": name1, "ast": ast1, "pseudo": pseudo1, "asm": asm1, "md": md1}
                         d2 = {"ea": ea, "bb": bb2, "name": name2, "ast": ast2, "pseudo": pseudo2, "asm": asm2, "md": md2}
-                        should_add, r = self.hooks.on_match(d1, d2, desc, ratio)
+                        should_add, ratio = self.hooks.on_match(d1, d2, desc, ratio)
 
                 if not should_add or name1 in self.matched1 or name2 in self.matched2:
                     continue
@@ -2140,6 +2140,10 @@ class CBinDiff:
                 log_refresh("Finding unmatched functions")
                 self.find_unmatched()
 
+                if self.hooks is not None:
+                    if 'on_finish' in dir(self.hooks):
+                        self.hooks.on_finish()
+
                 log("Done. Took {} seconds.".format(time.time() - t0))
         finally:
             cur.close()
@@ -2168,7 +2172,7 @@ if __name__ == "__main__":
         diaphora_dir = os.path.dirname(__file__)
         script = os.path.join(diaphora_dir, "diaphora_ida.py")
         with open(script, "rb") as f:
-            exec (compile(f.read(), script, 'exec'))
+            exec(compile(f.read(), script, 'exec'))
 
         do_diff = False
     else:
