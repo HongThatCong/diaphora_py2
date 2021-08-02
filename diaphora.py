@@ -47,7 +47,7 @@ except ImportError:
     is_ida = False
 
 #-------------------------------------------------------------------------------
-VERSION_VALUE = "2.0.5"
+VERSION_VALUE = "2.0.6"
 COPYRIGHT_VALUE = "Copyright(c) 2015-2021 Joxean Koret"
 COMMENT_VALUE = "Diaphora diffing plugin for IDA version %s" % VERSION_VALUE
 
@@ -55,7 +55,7 @@ COMMENT_VALUE = "Diaphora diffing plugin for IDA version %s" % VERSION_VALUE
 # better comparison ratios
 CMP_REPS = ["loc_", "j_nullsub_", "nullsub_", "j_sub_", "sub_",
             "qword_", "dword_", "byte_", "word_", "off_", "def_", "unk_", "asc_",
-            "stru_", "dbl_", "locret_"]
+  "stru_", "dbl_", "locret_", "flt_", "jpt_"]
 CMP_REMS = ["dword ptr ", "byte ptr ", "word ptr ", "qword ptr ", "short ptr"]
 
 
@@ -315,7 +315,10 @@ class CBinDiff:
         if isinstance(threading.current_thread(), threading._MainThread):
             self.db = db
             self.create_schema()
-            db.execute("analyze")
+            try:
+                db.execute("analyze")
+            except:
+                pass
 
     def get_db(self):
         tid = threading.current_thread().ident
@@ -648,11 +651,11 @@ class CBinDiff:
         # The last 4 fields are callers, callees, basic_blocks_data & bb_relations
         for prop in props[:len(props) - 4]:
             # XXX: Fixme! This is a hack for 64 bit architectures kernels
-            if type(prop) is int and (prop > 0xFFFFFFFF or prop < -0xFFFFFFFF):
+            if type(prop) is long and (prop > 0xFFFFFFFF or prop < -0xFFFFFFFF):
                 prop = str(prop)
 
             if type(prop) is list or type(prop) is set:
-                new_props.append(json.dumps(list(prop), ensure_ascii=False))
+                new_props.append(json.dumps(list(prop), ensure_ascii=False, cls=bytes_encoder))
             else:
                 new_props.append(prop)
 
@@ -693,7 +696,14 @@ class CBinDiff:
         sql = "insert into constants (func_id, constant) values (?, ?)"
         props_dict = self.create_function_dictionary(props)
         for constant in props_dict["constants"]:
-            if type(constant) is str and len(constant) > 4:
+            should_add = False
+            if type(constant) in [str, bytes] and len(constant) > 4:
+                should_add = True
+            elif type(constant) in [int, float, decimal.Decimal]:
+                should_add = True
+                constant = str(constant)
+
+            if should_add:
                 cur.execute(sql, (func_id, constant))
 
         # Phase 4: Save the basic blocks relationships
@@ -946,7 +956,7 @@ class CBinDiff:
             try:
                 bb_blocks[bb_ea].append([ins_ea, mnem, dis])
             except KeyError:
-                bb_blocks[bb_ea] = [[ins_ea, mnem, dis]]
+                bb_blocks[bb_ea] = [ [ins_ea, mnem, dis] ]
 
         sql = """ select (select address
                       from %s.basic_blocks
@@ -1609,7 +1619,7 @@ class CBinDiff:
 
     def find_same_name(self, choose):
         cur = self.db_cursor()
-        sql = """select f.address ea1, f.mangled_function mangled1,
+        sql = """select distinct f.address ea1, f.mangled_function mangled1,
                     d.address ea2, f.name name, d.name name2,
                     d.mangled_function mangled2,
                     f.pseudocode pseudo1, d.pseudocode pseudo2,
@@ -1775,7 +1785,7 @@ class CBinDiff:
         finally:
             cur.close()
 
-    def find_from_matches(self, the_items):
+    def find_from_matches(self, the_items, same_name=False):
         # XXX: FIXME: This is wrong in many ways, but still works... FIX IT!
         # Rule 1: if a function A in program P has id X, and function B in
         # the same program has id + 1, then, in program P2, function B maybe
@@ -1795,7 +1805,10 @@ class CBinDiff:
                 ea2 = match[3]
                 name2 = match[4]
                 ratio = float(match[5])
-                if ratio < 0.5:
+                if not same_name:
+                    if ratio < 0.5:
+                        continue
+                elif name1 != name2:
                     continue
 
                 id1 = self.get_function_id(name1)
@@ -2119,6 +2132,7 @@ class CBinDiff:
 
                 # Call address sequence heuristic
                 self.find_from_matches(self.best_chooser.items)
+                self.find_from_matches(self.partial_chooser.items, same_name = True)
 
                 if self.slow_heuristics:
                     # Find the functions from the callgraph

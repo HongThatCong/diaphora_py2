@@ -1,6 +1,6 @@
 """
 Diaphora, a diffing plugin for IDA
-Copyright (c) 2015-2020, Joxean Koret
+Copyright (c) 2015-2021, Joxean Koret
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -266,7 +266,7 @@ class CIDAChooser(CDiaphoraChooser):
         return len(self.items)
 
     def OnDeleteLine(self, items):
-        for n in items:
+        for n in sorted(items, reverse=True):
             if n >= 0:
                 name1 = self.items[n][2]
                 name2 = self.items[n][4]
@@ -1113,7 +1113,6 @@ class CIDABinDiff(diaphora.CBinDiff):
 
             if buf1 == buf2:
                 warning("Both pseudo-codes are equal.")
-                return
 
             fmt = HtmlFormatter()
             fmt.noclasses = True
@@ -1584,9 +1583,10 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
             name = demangle_named_name
 
         if self.hooks is not None:
-            ret = self.hooks.before_export_function(f, name)
-            if not ret:
-                return False
+            if 'before_export_function' in dir(self.hooks):
+                ret = self.hooks.before_export_function(f, name)
+                if not ret:
+                    return False
 
         f = int(f)
         func = get_func(f)
@@ -1947,9 +1947,10 @@ or selecting View -> Diaphora -> Diaphora - Show results""")
              basic_blocks_data, bb_relations)
 
         if self.hooks is not None:
-            d = self.create_function_dictionary(l)
-            d = self.hooks.after_export_function(d)
-            l = self.get_function_from_dictionary(d)
+            if 'after_export_function' in dir(self.hooks):
+                d = self.create_function_dictionary(l)
+                d = self.hooks.after_export_function(d)
+                l = self.get_function_from_dictionary(d)
 
         return l
 
